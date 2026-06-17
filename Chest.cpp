@@ -29,8 +29,8 @@ void Chest::draw(sf::RenderWindow& window, int tile_size) const {
 
 void Chest::drawLootWindow(sf::RenderWindow& window) const {
   const sf::Font* font = getFont();
-  if (!font) return;
 
+  // Оверлей и кнопки рисуются всегда, текст — только если шрифт доступен
   sf::RectangleShape overlay(sf::Vector2f(1000, 600));
   overlay.setFillColor(sf::Color(0, 0, 0, 160));
   window.draw(overlay);
@@ -42,10 +42,12 @@ void Chest::drawLootWindow(sf::RenderWindow& window) const {
   panel.setOutlineThickness(3);
   window.draw(panel);
 
-  sf::Text title("Chest opened! Choose your reward:", *font, 18);
-  title.setFillColor(sf::Color(200, 170, 0));
-  title.setPosition(215, 210);
-  window.draw(title);
+  if (font) {
+    sf::Text title("Chest opened! Choose your reward:", *font, 18);
+    title.setFillColor(sf::Color(200, 170, 0));
+    title.setPosition(215, 210);
+    window.draw(title);
+  }
 
   sf::RectangleShape btn_a(sf::Vector2f(150, 50));
   btn_a.setPosition(button_a_rect.left, button_a_rect.top);
@@ -54,10 +56,12 @@ void Chest::drawLootWindow(sf::RenderWindow& window) const {
   btn_a.setOutlineThickness(2);
   window.draw(btn_a);
 
-  sf::Text text_a(option_a.label, *font, 14);
-  text_a.setFillColor(sf::Color::White);
-  text_a.setPosition(button_a_rect.left + 10, button_a_rect.top + 15);
-  window.draw(text_a);
+  if (font) {
+    sf::Text text_a(option_a.label, *font, 14);
+    text_a.setFillColor(sf::Color::White);
+    text_a.setPosition(button_a_rect.left + 10, button_a_rect.top + 15);
+    window.draw(text_a);
+  }
 
   sf::RectangleShape btn_b(sf::Vector2f(150, 50));
   btn_b.setPosition(button_b_rect.left, button_b_rect.top);
@@ -66,10 +70,12 @@ void Chest::drawLootWindow(sf::RenderWindow& window) const {
   btn_b.setOutlineThickness(2);
   window.draw(btn_b);
 
-  sf::Text text_b(option_b.label, *font, 14);
-  text_b.setFillColor(sf::Color::White);
-  text_b.setPosition(button_b_rect.left + 10, button_b_rect.top + 15);
-  window.draw(text_b);
+  if (font) {
+    sf::Text text_b(option_b.label, *font, 14);
+    text_b.setFillColor(sf::Color::White);
+    text_b.setPosition(button_b_rect.left + 10, button_b_rect.top + 15);
+    window.draw(text_b);
+  }
 }
 
 int Chest::checkClick(sf::Vector2i mouse_pos) const {

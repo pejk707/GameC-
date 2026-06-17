@@ -71,12 +71,15 @@ void Game::processEvents() {
     // Клик мышью — открытие сундука или выбор награды
     if (event.type == sf::Event::MouseButtonPressed &&
         event.mouseButton.button == sf::Mouse::Left) {
-      sf::Vector2i mouse_pos(event.mouseButton.x, event.mouseButton.y);
+      // mapPixelToCoords корректирует координаты при любом размере окна
+      sf::Vector2f world = window.mapPixelToCoords(
+          sf::Vector2i(event.mouseButton.x, event.mouseButton.y));
+      sf::Vector2i mouse_pos(static_cast<int>(world.x),
+                             static_cast<int>(world.y));
 
       if (state == GameState::CHEST_OPEN) {
         handleChestClick(mouse_pos);
       } else if (state == GameState::PLAYING) {
-        // Попытка открыть сундук кликом (герой должен быть рядом)
         handleChestClick(mouse_pos);
       }
     }
@@ -235,6 +238,11 @@ void Game::spawnMonsters() {
     return false;
   };
 
+  // Минимальное расстояние от стартовой позиции героя
+  auto tooClose = [&](int x, int y) {
+    return std::abs(x - hero.getX()) + std::abs(y - hero.getY()) < 6;
+  };
+
   // Пытается разместить монстра рядом с случайной клеткой ярости (радиус 3)
   // При неудаче — в любом проходимом месте
   auto place = [&](auto makeMonster) {
@@ -243,7 +251,7 @@ void Game::spawnMonsters() {
       for (int attempt = 0; attempt < 150; ++attempt) {
         int x = rx + randInt(-3, 3);
         int y = ry + randInt(-3, 3);
-        if (map.isWalkable(x, y) && !isTaken(x, y)) {
+        if (map.isWalkable(x, y) && !isTaken(x, y) && !tooClose(x, y)) {
           monsters.push_back(makeMonster(x, y));
           return;
         }
@@ -252,7 +260,7 @@ void Game::spawnMonsters() {
     for (int attempt = 0; attempt < 500; ++attempt) {
       int x = randInt(1, Map::WIDTH - 2);
       int y = randInt(1, Map::HEIGHT - 2);
-      if (map.isWalkable(x, y) && !isTaken(x, y)) {
+      if (map.isWalkable(x, y) && !isTaken(x, y) && !tooClose(x, y)) {
         monsters.push_back(makeMonster(x, y));
         return;
       }
@@ -367,7 +375,6 @@ void Game::render() {
   hero.draw(window, TILE_SIZE);
 
   ui.draw(window, hero, monsters);
-  ui.drawRageZoneHint(window);
 
   // Окно выбора сундука
   if (state == GameState::CHEST_OPEN && active_chest_index >= 0) {

@@ -165,7 +165,7 @@ void UI::drawGameOver(sf::RenderWindow& window, bool victory) const {
 
 void UI::drawRageZoneHint(sf::RenderWindow& window) const {
   if (!font_loaded) return;
-  sf::Text hint("Red tiles = Rage Zones (+50% ATK, -3HP/turn)", font, 12);
+  sf::Text hint("Red tiles = Danger Zones (-3 HP/turn)", font, 12);
   hint.setFillColor(sf::Color(200, 80, 80));
   hint.setPosition(5, 582);
   window.draw(hint);
