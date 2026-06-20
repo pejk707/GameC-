@@ -2,6 +2,8 @@
 #include <SFML/Graphics.hpp>
 #include <vector>
 
+#include "TileSet.h"
+
 // Типы тайлов на карте
 enum class TileType { FLOOR, WALL, RAGE_ZONE };
 
@@ -28,4 +30,5 @@ class Map {
   void buildMap();
 
   std::vector<std::vector<TileType>> tiles;
+  TileSet tileSet;
 };

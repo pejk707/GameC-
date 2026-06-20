@@ -14,6 +14,7 @@ add_executable(GameCpp
     Hero.cpp
     Monster.cpp
     Map.cpp
+    TileSet.cpp
     Chest.cpp
     CombatSystem.cpp
     UI.cpp
@@ -28,6 +29,15 @@ add_custom_command(TARGET GameCpp POST_BUILD
         "C:/Windows/Fonts/arial.ttf"
         "$<TARGET_FILE_DIR:GameCpp>/arial.ttf"
 )
+
+# Copy tiles/ folder if он существует (для пользовательских PNG спрайтов)
+if(EXISTS "${CMAKE_SOURCE_DIR}/tiles")
+    add_custom_command(TARGET GameCpp POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+            "${CMAKE_SOURCE_DIR}/tiles"
+            "$<TARGET_FILE_DIR:GameCpp>/tiles"
+    )
+endif()
 
 # Copy SFML DLLs next to the executable
 if(WIN32)

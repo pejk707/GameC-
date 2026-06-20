@@ -62,28 +62,22 @@ void Map::buildMap() {
 }
 
 void Map::draw(sf::RenderWindow& window, int tile_size) const {
+  const float ts = static_cast<float>(tile_size);
+
   for (int y = 0; y < HEIGHT; y++) {
     for (int x = 0; x < WIDTH; x++) {
-      sf::RectangleShape rect(sf::Vector2f(tile_size, tile_size));
-      rect.setPosition(x * tile_size, y * tile_size);
-
+      const sf::Texture* tex = nullptr;
       switch (tiles[y][x]) {
-        case TileType::WALL:
-          rect.setFillColor(sf::Color(80, 80, 80));
-          break;
-        case TileType::RAGE_ZONE:
-          // Зона ярости — тёмно-красный пол
-          rect.setFillColor(sf::Color(100, 20, 20));
-          break;
-        case TileType::FLOOR:
-        default:
-          rect.setFillColor(sf::Color(40, 35, 30));
-          break;
+        case TileType::WALL:      tex = &tileSet.wall();     break;
+        case TileType::RAGE_ZONE: tex = &tileSet.rageZone(); break;
+        default:                  tex = &tileSet.floor();    break;
       }
 
-      rect.setOutlineColor(sf::Color(20, 20, 20));
-      rect.setOutlineThickness(1);
-      window.draw(rect);
+      sf::Sprite spr(*tex);
+      auto sz = tex->getSize();
+      spr.setScale(ts / sz.x, ts / sz.y);
+      spr.setPosition(static_cast<float>(x) * ts, static_cast<float>(y) * ts);
+      window.draw(spr);
     }
   }
 }
