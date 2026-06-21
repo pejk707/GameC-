@@ -1,7 +1,7 @@
 #include "Hero.h"
 
 #include "EventManager.h"
-#include "FontCache.h"
+#include "SpriteCache.h"
 
 Hero::Hero(int x, int y)
     : Entity(x, y, 100, 15, 120),
@@ -11,17 +11,12 @@ Hero::Hero(int x, int y)
       max_mana(50) {}
 
 void Hero::draw(sf::RenderWindow& window, int tile_size) const {
-  sf::RectangleShape rect(sf::Vector2f(tile_size - 2, tile_size - 2));
-  rect.setPosition(x * tile_size + 1, y * tile_size + 1);
-  rect.setFillColor(sf::Color(30, 100, 200));
-  window.draw(rect);
-
-  if (const sf::Font* font = getFont()) {
-    sf::Text text("@", *font, tile_size - 8);
-    text.setFillColor(sf::Color::White);
-    text.setPosition(x * tile_size + 4, y * tile_size + 2);
-    window.draw(text);
-  }
+  const sf::Texture& tex = getSpriteSet().hero();
+  sf::Sprite spr(tex);
+  auto sz = tex.getSize();
+  spr.setScale({(float)tile_size / sz.x, (float)tile_size / sz.y});
+  spr.setPosition({(float)(x * tile_size), (float)(y * tile_size)});
+  window.draw(spr);
 }
 
 void Hero::onMove() {

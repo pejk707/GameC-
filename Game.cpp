@@ -3,7 +3,7 @@
 #include <random>
 
 Game::Game()
-    : window(sf::VideoMode(1000, 600), "Dungeon Crawler"),
+    : window(sf::VideoMode({1000u, 600u}), "Dungeon Crawler"),
       hero(1, 1),
       state(GameState::PLAYING),
       active_chest_index(-1) {
@@ -44,43 +44,36 @@ void Game::run() {
 }
 
 void Game::processEvents() {
-  sf::Event event;
-  while (window.pollEvent(event)) {
-    if (event.type == sf::Event::Closed) {
+  while (const std::optional event = window.pollEvent()) {
+    if (event->is<sf::Event::Closed>()) {
       window.close();
     }
 
-    // Перезапуск
-    if (event.type == sf::Event::KeyPressed &&
-        event.key.code == sf::Keyboard::R) {
-      restart();
-      return;
-    }
-
-    // Управление только во время игры
-    if (state == GameState::PLAYING) {
-      if (event.type == sf::Event::KeyPressed) {
-        if (event.key.code == sf::Keyboard::W) handleMove(0, -1);
-        if (event.key.code == sf::Keyboard::S) handleMove(0, 1);
-        if (event.key.code == sf::Keyboard::A) handleMove(-1, 0);
-        if (event.key.code == sf::Keyboard::D) handleMove(1, 0);
-        if (event.key.code == sf::Keyboard::Space) handleRest();
+    if (const auto* key = event->getIf<sf::Event::KeyPressed>()) {
+      // Перезапуск
+      if (key->code == sf::Keyboard::Key::R) {
+        restart();
+        return;
+      }
+      // Управление только во время игры
+      if (state == GameState::PLAYING) {
+        if (key->code == sf::Keyboard::Key::W) handleMove(0, -1);
+        if (key->code == sf::Keyboard::Key::S) handleMove(0, 1);
+        if (key->code == sf::Keyboard::Key::A) handleMove(-1, 0);
+        if (key->code == sf::Keyboard::Key::D) handleMove(1, 0);
+        if (key->code == sf::Keyboard::Key::Space) handleRest();
       }
     }
 
     // Клик мышью — открытие сундука или выбор награды
-    if (event.type == sf::Event::MouseButtonPressed &&
-        event.mouseButton.button == sf::Mouse::Left) {
-      // mapPixelToCoords корректирует координаты при любом размере окна
-      sf::Vector2f world = window.mapPixelToCoords(
-          sf::Vector2i(event.mouseButton.x, event.mouseButton.y));
-      sf::Vector2i mouse_pos(static_cast<int>(world.x),
-                             static_cast<int>(world.y));
-
-      if (state == GameState::CHEST_OPEN) {
-        handleChestClick(mouse_pos);
-      } else if (state == GameState::PLAYING) {
-        handleChestClick(mouse_pos);
+    if (const auto* mouse = event->getIf<sf::Event::MouseButtonPressed>()) {
+      if (mouse->button == sf::Mouse::Button::Left) {
+        sf::Vector2f world = window.mapPixelToCoords(mouse->position);
+        sf::Vector2i mouse_pos(static_cast<int>(world.x),
+                               static_cast<int>(world.y));
+        if (state == GameState::CHEST_OPEN || state == GameState::PLAYING) {
+          handleChestClick(mouse_pos);
+        }
       }
     }
   }
@@ -183,7 +176,8 @@ void Game::handleChestClick(sf::Vector2i mouse_pos) {
     if (chests[i].isOpen()) continue;
     int cx = chests[i].getX() * TILE_SIZE;
     int cy = chests[i].getY() * TILE_SIZE;
-    sf::FloatRect chest_rect(cx, cy, TILE_SIZE, TILE_SIZE);
+    sf::FloatRect chest_rect({static_cast<float>(cx), static_cast<float>(cy)},
+                              {static_cast<float>(TILE_SIZE), static_cast<float>(TILE_SIZE)});
 
     if (chest_rect.contains(sf::Vector2f(mouse_pos))) {
       // Герой должен быть рядом с сундуком

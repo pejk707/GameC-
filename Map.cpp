@@ -75,8 +75,8 @@ void Map::draw(sf::RenderWindow& window, int tile_size) const {
 
       sf::Sprite spr(*tex);
       auto sz = tex->getSize();
-      spr.setScale(ts / sz.x, ts / sz.y);
-      spr.setPosition(static_cast<float>(x) * ts, static_cast<float>(y) * ts);
+      spr.setScale({ts / sz.x, ts / sz.y});
+      spr.setPosition({static_cast<float>(x) * ts, static_cast<float>(y) * ts});
       window.draw(spr);
     }
   }

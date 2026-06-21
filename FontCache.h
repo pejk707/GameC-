@@ -11,6 +11,6 @@ inline std::string getExeDir() {
 
 inline const sf::Font* getFont() {
   static sf::Font font;
-  static bool loaded = font.loadFromFile(getExeDir() + "/arial.ttf");
+  static bool loaded = font.openFromFile(getExeDir() + "/arial.ttf");
   return loaded ? &font : nullptr;
 }

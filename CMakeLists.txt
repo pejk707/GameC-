@@ -5,8 +5,8 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Use downloaded SFML binaries
-set(SFML_DIR "D:/SFML-2.6.1/lib/cmake/SFML")
-find_package(SFML 2.6 COMPONENTS graphics window system REQUIRED)
+set(SFML_DIR "E:/SFML/SFML-3.1.0/lib/cmake/SFML")
+find_package(SFML 3 COMPONENTS Graphics Window System REQUIRED)
 
 add_executable(GameCpp
     main.cpp
@@ -15,13 +15,14 @@ add_executable(GameCpp
     Monster.cpp
     Map.cpp
     TileSet.cpp
+    SpriteSet.cpp
     Chest.cpp
     CombatSystem.cpp
     UI.cpp
 )
 
-target_include_directories(GameCpp PRIVATE "D:/SFML-2.6.1/include")
-target_link_libraries(GameCpp PRIVATE sfml-graphics sfml-window sfml-system)
+target_include_directories(GameCpp PRIVATE "E:/SFML/SFML-3.1.0/include")
+target_link_libraries(GameCpp PRIVATE SFML::Graphics SFML::Window SFML::System)
 
 # Copy arial.ttf next to the executable after build
 add_custom_command(TARGET GameCpp POST_BUILD
@@ -43,7 +44,7 @@ endif()
 if(WIN32)
     add_custom_command(TARGET GameCpp POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
-            "D:/SFML-2.6.1/bin"
+            "E:/SFML/SFML-3.1.0/bin"
             "$<TARGET_FILE_DIR:GameCpp>"
     )
 endif()
