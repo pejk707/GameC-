@@ -16,32 +16,62 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Download SFML 3.1.0 (prebuilt, vc17 x64)
+      - name: Setup MSVC environment
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Download SFML 3.1.0
         shell: powershell
         run: |
+          Write-Host "Downloading SFML..."
           Invoke-WebRequest `
             -Uri "https://www.sfml-dev.org/files/SFML-3.1.0-windows-vc17-64-bit.zip" `
-            -OutFile "SFML.zip"
-          Expand-Archive "SFML.zip" -DestinationPath "C:/"
+            -OutFile "SFML.zip" `
+            -UseBasicParsing
+          Write-Host "Extracting..."
+          Expand-Archive "SFML.zip" -DestinationPath "C:/SFML-pkg" -Force
+          Write-Host "Contents of C:/SFML-pkg:"
+          Get-ChildItem "C:/SFML-pkg" -Recurse -Depth 3
+
+      - name: Locate SFML cmake dir
+        shell: powershell
+        run: |
+          $cmake = Get-ChildItem -Path "C:/SFML-pkg" -Recurse -Filter "SFMLConfig.cmake" |
+                   Select-Object -First 1
+          if (-not $cmake) { Write-Error "SFMLConfig.cmake not found!"; exit 1 }
+          $dir = $cmake.Directory.FullName
+          Write-Host "SFML cmake dir: $dir"
+          echo "SFML_CMAKE_DIR=$dir" >> $env:GITHUB_ENV
 
       - name: Configure CMake
         shell: powershell
         run: |
-          cmake -S . -B build `
+          cmake -S . -B build -G Ninja `
             -DCMAKE_BUILD_TYPE=Release `
-            -DSFML_DIR="C:/SFML-3.1.0-windows-vc17-64-bit/lib/cmake/SFML"
+            -DSFML_DIR="${env:SFML_CMAKE_DIR}"
 
       - name: Build
-        run: cmake --build build --config Release
+        shell: powershell
+        run: cmake --build build
 
       - name: Package
         shell: powershell
         run: |
           New-Item -ItemType Directory -Force release | Out-Null
-          Copy-Item "build/Release/GameCpp.exe" "release/"
+          Copy-Item "build/GameCpp.exe" "release/"
           Copy-Item "C:/Windows/Fonts/arial.ttf" "release/"
-          Get-ChildItem "build/Release" -Filter "*.dll" |
+          # DLLs copied by CMake POST_BUILD — grab everything from build/
+          Get-ChildItem "build" -Filter "*.dll" |
               ForEach-Object { Copy-Item $_.FullName "release/" }
+          # Also grab SFML DLLs directly from the package in case POST_BUILD missed any
+          $sfmlBin = Split-Path $env:SFML_CMAKE_DIR -Parent | Split-Path -Parent | Join-Path -ChildPath "bin"
+          if (Test-Path $sfmlBin) {
+              Get-ChildItem "$sfmlBin" -Filter "*-3.dll" |
+                  ForEach-Object { Copy-Item $_.FullName "release/" -Force }
+          }
+          Write-Host "Release folder contents:"
+          Get-ChildItem release
           Compress-Archive -Path "release/*" -DestinationPath "GameCpp-windows.zip"
 
       - name: Upload build artifact
