@@ -4,8 +4,6 @@ project(GameCpp)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Use downloaded SFML binaries
-set(SFML_DIR "E:/SFML/SFML-3.1.0/lib/cmake/SFML")
 find_package(SFML 3 COMPONENTS Graphics Window System REQUIRED)
 
 add_executable(GameCpp
@@ -21,7 +19,6 @@ add_executable(GameCpp
     UI.cpp
 )
 
-target_include_directories(GameCpp PRIVATE "E:/SFML/SFML-3.1.0/include")
 target_link_libraries(GameCpp PRIVATE SFML::Graphics SFML::Window SFML::System)
 
 # Copy arial.ttf next to the executable after build
@@ -31,7 +28,7 @@ add_custom_command(TARGET GameCpp POST_BUILD
         "$<TARGET_FILE_DIR:GameCpp>/arial.ttf"
 )
 
-# Copy tiles/ folder if он существует (для пользовательских PNG спрайтов)
+# Copy tiles/ folder if it exists (user-supplied PNG sprites)
 if(EXISTS "${CMAKE_SOURCE_DIR}/tiles")
     add_custom_command(TARGET GameCpp POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
@@ -40,11 +37,11 @@ if(EXISTS "${CMAKE_SOURCE_DIR}/tiles")
     )
 endif()
 
-# Copy SFML DLLs next to the executable
+# Copy SFML DLLs on Windows (works with vcpkg and manual installs)
 if(WIN32)
     add_custom_command(TARGET GameCpp POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
-            "E:/SFML/SFML-3.1.0/bin"
+            $<TARGET_FILE_DIR:SFML::Graphics>
             "$<TARGET_FILE_DIR:GameCpp>"
     )
 endif()
