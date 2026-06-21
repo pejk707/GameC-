@@ -1,5 +1,9 @@
 # Dungeon Crawler — Desktop Dungeons inspired RPG
 
+## Скачать и играть
+
+> **Без сборки:** зайди в раздел [Releases](../../releases/latest), скачай `GameCpp-windows.zip`, распакуй и запусти `GameCpp.exe`. Всё включено.
+
 ## ФИО
 <Бабкин Даниил Андреевич 504727>
 <Стефановский Евгений Александрович 467600>

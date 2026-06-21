@@ -1,0 +1,79 @@
+name: Build & Release
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Clone vcpkg
+        run: |
+          git clone https://github.com/microsoft/vcpkg.git C:/vcpkg --depth=1
+          C:/vcpkg/bootstrap-vcpkg.bat -disableMetrics
+
+      - name: Cache vcpkg binary cache
+        uses: actions/cache@v4
+        with:
+          path: C:/Users/runneradmin/AppData/Local/vcpkg/archives
+          key: ${{ runner.os }}-vcpkg-${{ hashFiles('vcpkg.json') }}-v1
+          restore-keys: |
+            ${{ runner.os }}-vcpkg-
+
+      - name: Configure CMake
+        run: >
+          cmake -S . -B build
+          -DCMAKE_BUILD_TYPE=Release
+          -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake
+          -DVCPKG_TARGET_TRIPLET=x64-windows
+
+      - name: Build
+        run: cmake --build build --config Release
+
+      - name: Package
+        shell: powershell
+        run: |
+          New-Item -ItemType Directory -Force release | Out-Null
+          Copy-Item "build/Release/GameCpp.exe" "release/"
+          Copy-Item "C:/Windows/Fonts/arial.ttf"  "release/"
+          Get-ChildItem "build/Release" -Filter "*.dll" |
+              ForEach-Object { Copy-Item $_.FullName "release/" }
+          Compress-Archive -Path "release/*" -DestinationPath "GameCpp-windows.zip"
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: GameCpp-windows
+          path: GameCpp-windows.zip
+          retention-days: 30
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: GameCpp-windows.zip
+          body: |
+            ## Скачать и запустить
+
+            1. Скачай **GameCpp-windows.zip**
+            2. Распакуй в любую папку
+            3. Запусти **GameCpp.exe**
+
+            Никаких дополнительных установок не требуется — все DLL и шрифты уже внутри архива.
+
+            ## Управление
+            | Клавиша | Действие |
+            |---------|----------|
+            | WASD | Передвижение |
+            | Space | Отдых / Хил за ману |
+            | ЛКМ на сундук | Открыть сундук |
+            | R | Перезапустить |
