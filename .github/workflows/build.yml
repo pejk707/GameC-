@@ -9,9 +9,6 @@ on:
 permissions:
   contents: write
 
-env:
-  VCPKG_ROOT: C:/vcpkg
-
 jobs:
   build-windows:
     runs-on: windows-latest
@@ -19,36 +16,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup vcpkg
-        shell: powershell
-        run: |
-          git clone https://github.com/microsoft/vcpkg.git $env:VCPKG_ROOT --depth=1
-          & "$env:VCPKG_ROOT/bootstrap-vcpkg.bat" -disableMetrics
+      - name: Setup MSVC x64
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
 
-      # Binary cache: stores pre-compiled vcpkg packages across runs
-      - name: Cache vcpkg binary cache
+      - name: Cache SFML build (_deps)
         uses: actions/cache@v4
         with:
-          path: C:/Users/runneradmin/AppData/Local/vcpkg/archives
-          key: ${{ runner.os }}-vcpkg-sfml3-v1
-          restore-keys: ${{ runner.os }}-vcpkg-sfml3-
-
-      - name: Install SFML via vcpkg (classic mode, no manifest)
-        shell: powershell
-        run: |
-          & "$env:VCPKG_ROOT/vcpkg.exe" install sfml:x64-windows --no-print-usage
+          path: build/_deps
+          key: ${{ runner.os }}-sfml-3.1.0-v1
 
       - name: Configure CMake
-        shell: powershell
-        run: |
-          cmake -S . -B build -G Ninja `
-            -DCMAKE_BUILD_TYPE=Release `
-            -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" `
-            -DVCPKG_TARGET_TRIPLET=x64-windows `
-            -DVCPKG_MANIFEST_MODE=OFF
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
 
       - name: Build
-        shell: powershell
         run: cmake --build build
 
       - name: Package
@@ -57,11 +39,7 @@ jobs:
           New-Item -ItemType Directory -Force release | Out-Null
           Copy-Item "build/GameCpp.exe" "release/"
           Copy-Item "C:/Windows/Fonts/arial.ttf" "release/"
-          # DLLs copied by CMake POST_BUILD into build/
           Get-ChildItem "build" -Filter "*.dll" |
-              ForEach-Object { Copy-Item $_.FullName "release/" -Force }
-          # Safety: also grab vcpkg DLLs in case POST_BUILD missed any
-          Get-ChildItem "$env:VCPKG_ROOT/installed/x64-windows/bin" -Filter "*.dll" -ErrorAction SilentlyContinue |
               ForEach-Object { Copy-Item $_.FullName "release/" -Force }
           Write-Host "=== Release contents ==="
           Get-ChildItem "release"
