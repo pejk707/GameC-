@@ -16,25 +16,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Clone vcpkg
+      - name: Download SFML 3.1.0 (prebuilt, vc17 x64)
+        shell: powershell
         run: |
-          git clone https://github.com/microsoft/vcpkg.git C:/vcpkg --depth=1
-          C:/vcpkg/bootstrap-vcpkg.bat -disableMetrics
-
-      - name: Cache vcpkg binary cache
-        uses: actions/cache@v4
-        with:
-          path: C:/Users/runneradmin/AppData/Local/vcpkg/archives
-          key: ${{ runner.os }}-vcpkg-${{ hashFiles('vcpkg.json') }}-v1
-          restore-keys: |
-            ${{ runner.os }}-vcpkg-
+          Invoke-WebRequest `
+            -Uri "https://www.sfml-dev.org/files/SFML-3.1.0-windows-vc17-64-bit.zip" `
+            -OutFile "SFML.zip"
+          Expand-Archive "SFML.zip" -DestinationPath "C:/"
 
       - name: Configure CMake
-        run: >
-          cmake -S . -B build
-          -DCMAKE_BUILD_TYPE=Release
-          -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake
-          -DVCPKG_TARGET_TRIPLET=x64-windows
+        shell: powershell
+        run: |
+          cmake -S . -B build `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DSFML_DIR="C:/SFML-3.1.0-windows-vc17-64-bit/lib/cmake/SFML"
 
       - name: Build
         run: cmake --build build --config Release
@@ -44,7 +39,7 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force release | Out-Null
           Copy-Item "build/Release/GameCpp.exe" "release/"
-          Copy-Item "C:/Windows/Fonts/arial.ttf"  "release/"
+          Copy-Item "C:/Windows/Fonts/arial.ttf" "release/"
           Get-ChildItem "build/Release" -Filter "*.dll" |
               ForEach-Object { Copy-Item $_.FullName "release/" }
           Compress-Archive -Path "release/*" -DestinationPath "GameCpp-windows.zip"
@@ -68,7 +63,7 @@ jobs:
             2. Распакуй в любую папку
             3. Запусти **GameCpp.exe**
 
-            Никаких дополнительных установок не требуется — все DLL и шрифты уже внутри архива.
+            Никаких установок не требуется — все DLL и шрифты уже внутри архива.
 
             ## Управление
             | Клавиша | Действие |
